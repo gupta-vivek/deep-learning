@@ -1,41 +1,6 @@
-import pandas as pd
-import numpy as np
+import read_data
 import tensorflow as tf
 
-
-# One hot vector function.
-def one_hot_vector(label, output_label, size):
-    for i in label:
-        a = np.zeros(size, dtype='float')
-        a[i] = 1
-        output_label.append(a)
-
-
-# Divide into batches.
-def divide_batches(input_batch, output_batch, batch_size):
-    for i in range(0, len(input_batch), batch_size):
-        output_batch.append(input_batch[i: i + batch_size])
-
-
-# Read training data from csv.
-df = pd.read_csv('mnist_train.csv')
-train_label = df.label
-df = df.drop(['label'], axis=1)
-train_data = df.values
-print("Size of training set - ", len(train_data))
-
-# Read testing data from csv.
-df = pd.read_csv('mnist_test.csv')
-test_label = df.label
-df = df.drop(['label'], axis = 1)
-test_data = df.values
-print("Size of testing set - ", len(test_data))
-
-# Convert labels to one hot vector.
-train_label_1 = []
-one_hot_vector(train_label, train_label_1, 10)
-test_label_1 = []
-one_hot_vector(test_label, test_label_1, 10)
 
 # Parameters.
 learning_rate = 0.01
@@ -43,12 +8,11 @@ epochs = 500
 display_step = 5
 batch_size = 100
 
-# Divide into batches.
-train_data_input = []
-train_label_input = []
+# Read data.
+train_data, train_label, test_data, test_label = read_data.read_data_csv()
 
-divide_batches(train_data, train_data_input, batch_size)
-divide_batches(train_label_1, train_label_input, batch_size)
+train_x = read_data.divide_batches(train_data, batch_size)
+train_y = read_data.divide_batches(train_label, batch_size)
 
 # Input.
 x = tf.placeholder(tf.float32,  [None, 784])
@@ -59,7 +23,6 @@ y = tf.placeholder(tf.float32, [None, 10])
 W = tf.Variable(tf.random_normal([784, 10]))
 # Bias.
 b = tf.Variable(tf.random_normal([10]))
-
 # Model.
 model = tf.add(tf.matmul(x, W), b)
 
@@ -82,13 +45,22 @@ accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32)) * 100
 
 init = tf.initialize_all_variables()
 
+print("Testing label")
+for i in test_label:
+    print("Data - ", i)
+    print("Shape - ", i.shape)
+    break
+print("Length - ", len(test_label))
+
 with tf.Session() as sess:
     sess.run(init)
 
     for i in range(epochs):
-        for train, label in zip(train_data_input, train_label_input):
+        for train, label in zip(train_x, train_y):
             _  = sess.run(optimizer, feed_dict = {x: train, y: label})
 
         print("Epoch - ", i + 1)
-        acc = sess.run(accuracy, feed_dict = {x: test_data, y: test_label_1})
+        acc = sess.run(accuracy, feed_dict = {x: test_data, y: test_label})
         print("Testing Accuracy - ", acc)
+        c = sess.run(cost, feed_dict = {x: test_data, y: test_label})
+        print("Testing Cost - ", c)
