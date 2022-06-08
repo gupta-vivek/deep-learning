@@ -1,7 +1,6 @@
 import tensorflow as tf
 
 import read_data
-import tensorflow as tf
 
 
 # Parameters.
